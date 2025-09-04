@@ -126,9 +126,45 @@
 
   <script>
   // ─────────────────────────────────────────────────────────────
-  // Telemetry helper (GTM)
+  // Telemetry (GTM/GA4)
   window.dataLayer = window.dataLayer || [];
-  function track(event, params={}){ window.dataLayer.push({event, ts:Date.now(), ...params}); }
+
+  const Telemetry = (() => {
+    let ctx = {
+      src: 'player',           // easy GTM filter
+      app: 'player-model',
+      version: '0.1.1',        // bump when you ship
+      session_id: crypto.randomUUID(),
+      run_id: null,
+      world_name: null,
+      mode: 'story',           // or 'sim'
+      branch: 'main'
+    };
+
+    function setContext(patch = {}) { ctx = { ...ctx, ...patch }; }
+
+    function flatten(obj, prefix = '', out = {}) {
+      if (!obj || typeof obj !== 'object') return out;
+      for (const [k, v] of Object.entries(obj)) {
+        const key = prefix ? `${prefix}.${k}` : k;
+        if (v && typeof v === 'object' && !Array.isArray(v)) flatten(v, key, out);
+        else out[key] = v;
+      }
+      return out;
+    }
+
+    function track(event, params = {}) {
+      const payload = { ts: Date.now(), ...flatten(params) };
+      const merged = { ...ctx, ...payload };
+      try { window.dataLayer.push({ event, ...merged }); } catch (_) {}
+      return merged;
+    }
+
+    return { track, setContext, getContext: () => ({ ...ctx }) };
+  })();
+
+  // keep old calls working
+  const track = Telemetry.track;
 
   // Utils
   const uid = () => ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
@@ -252,6 +288,13 @@
     try{
       const v = seeds.world?.variables || {}; state.vars.supplies = Number(v.supplies?.start ?? 100); state.vars.morale = Number(v.morale?.start ?? 50);
     }catch(_){}
+    Telemetry.setContext({
+      run_id: state.run_id,
+      world_name: (window.__SEEDS?.world?.name) || 'Unknown',
+      mode: 'story',
+      branch: 'main',
+      version: '0.1.1'
+    });
     emit('run_start', {});
     goTo((seeds.storylets && seeds.storylets[0]?.id) || 'canyon_entry', seeds);
   }
