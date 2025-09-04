@@ -1,118 +1,262 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FourTwenty • The Player</title>
-  <meta name="description" content="Decision simulation — branching paths, outcomes, and behavior under uncertainty.">
+  <meta name="description" content="Decision simulation — branching paths, outcomes, and behavior under uncertainty." />
+  <meta name="color-scheme" content="light dark" />
 
-  <!-- Push context BEFORE GTM so page_view can include it -->
+  <!-- Google Tag Manager (replace GTM ID if needed) -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ site_area: 'player' });
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+    var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
+    j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-WVC4SNLB');
   </script>
+  <!-- End GTM -->
 
-  <!-- Google Tag Manager (GTM only; same container as main site) -->
-  <script>
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-      var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
-      j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-WVC4SNLB');  /* ← your GTM ID */
-  </script>
+  <!-- js-yaml for loading ./seeds/*.yml -->
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
   <style>
-    :root{--bg:#0b1220;--panel:#0f1728;--text:#e6edf3;--muted:#9fb0d1;--border:#223052;--accent:#7aa2ff}
+    :root{
+      --bg:#0b0d10;--panel:#12161b;--muted:#7b8694;--fg:#eef2f6;--accent:#7dd3fc;--line:#1f2730;
+    }
+    @media (prefers-color-scheme: light){
+      :root{--bg:#f7fafc;--panel:#ffffff;--muted:#5b6572;--fg:#0b1220;--accent:#0369a1;--line:#e6ebf1}
+    }
     *{box-sizing:border-box}
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif}
-    a{color:var(--accent);text-decoration:none}
-    a:hover{text-decoration:underline}
-    .shell{max-width:980px;margin:0 auto;padding:28px 20px}
-    header{display:flex;justify-content:space-between;align-items:center;padding:6px 0 18px}
-    .brand{font-weight:700;letter-spacing:.2px}
-    .btn{display:inline-block;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:#121b2f;color:var(--text)}
-    .btn:hover{background:#16243a}
-    .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center;margin:14px 0}
-    .panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:14px}
-    .muted{color:var(--muted)}
-    @media (max-width:880px){.hero{grid-template-columns:1fr}}
-    code{background:#0f1728;border:1px solid var(--border);padding:2px 6px;border-radius:8px}
-    footer{margin:28px 0;color:var(--muted);font-size:13px}
+    body{margin:0; font:14px/1.5 system-ui,-apple-system,Sego UI,Roboto,Arial; background:var(--bg); color:var(--fg)}
+    header{display:flex;gap:.75rem;align-items:center; padding:18px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; backdrop-filter:saturate(1.2) blur(6px); background:color-mix(in oklab, var(--bg) 92%, transparent)}
+    header h1{font-size:18px; margin:0}
+    header .badge{padding:2px 8px; border:1px solid var(--line); border-radius:999px; color:var(--muted)}
+
+    .wrap{max-width:1100px; margin:0 auto; padding:20px}
+    .grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:16px}
+    .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px}
+    .card h3{margin:.25rem 0 .75rem 0; font-size:16px}
+
+    .story{min-height:270px}
+    .story h2{margin:.1rem 0 .5rem 0; font-size:18px}
+    .story p{margin:.25rem 0 .75rem 0}
+    .choices{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+    .btn{appearance:none; border:1px solid var(--line); background:#1b2026; color:var(--fg); padding:8px 12px; border-radius:999px; cursor:pointer}
+    .btn:hover{border-color:var(--accent)}
+    .btn[disabled]{opacity:.6; cursor:not-allowed}
+
+    .controls label{display:flex; justify-content:space-between; align-items:center; margin:8px 0; color:var(--muted)}
+    input[type="range"]{width:54%}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
+
+    .log{max-height:260px; overflow:auto; border-radius:12px; border:1px solid var(--line)}
+    table{width:100%; border-collapse:collapse}
+    th,td{padding:8px 10px; border-bottom:1px solid var(--line); font-size:12px}
+    th{position:sticky; top:0; background:var(--panel)}
+
+    footer{display:flex; gap:8px; justify-content:flex-end; margin-top:14px}
+    a.link{color:var(--accent); text-decoration:none}
   </style>
 </head>
 <body>
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WVC4SNLB" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- GTM noscript -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WVC4SNLB" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-<div class="shell">
   <header>
-    <div class="brand">FourTwenty • The Player</div>
-    <nav>
-      <!-- Back to main site root; works with user/org Pages and custom domains -->
-      <a class="btn" href="https://zbreeden.github.io/FourTwentyAnalytics/" onclick="signalClick('back_to_main','Back to FourTwenty','header')">← Back to FourTwenty</a>
-    </nav>
+    <a href="https://zbreeden.github.io/FourTwentyAnalytics/?" class="btn" title="Back to FourTwenty">← Back</a>
+    <h1>FourTwenty • The Player</h1>
+    <span class="badge">v0.1</span>
+    <span class="badge mono" id="run-id">—</span>
+    <span style="margin-left:auto" class="badge">Story ▸ Sim ▸ Score</span>
   </header>
 
-  <section class="hero">
-    <div>
-      <h1 style="margin:0 0 8px">Decision simulation — branching paths, outcomes, and behavior under uncertainty.</h1>
-      <p class="muted">A tiny site + playground that pushes PII-free events into <code>dataLayer</code>. Map in GTM, verify in GA4 DebugView, and iterate on your taxonomy.</p>
-      <div class="grid">
-        <a class="btn" href="#" onclick="signalClick('cta_get_started','Get Started','hero');return false;">Trigger CTA event</a>
-        <a class="btn" href="#" onclick="pushPage('home','Home');return false;">Trigger virtual page_view</a>
-        <a class="btn" href="./playground/ux_playground.html" onclick="signalClick('open_playground','UX Playground','hero')">Open UX Playground →</a>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h3 style="margin:6px 0 8px">Setup checklist</h3>
-      <ol style="margin:0 0 8px 18px; padding:0; line-height:1.6">
-        <li>Use the same GTM container as your main site (<code>GTM-WVC4SNLB</code>) for unified tagging.</li>
-        <li>Segment by <code>site_area</code> (already pushed as <code>'signal'</code> on this page).</li>
-        <li>Verify events in GA4 <em>DebugView</em> while clicking around.</li>
-      </ol>
-      <p class="muted" style="margin:8px 0 0">Links and buttons below emit sample events: <code>cta_click</code>, <code>nav_search</code>, <code>form_submit</code>, <code>page_view</code>.</p>
-    </div>
-  </section>
-
-  <section class="panel">
-    <h3 style="margin:6px 0 8px">Live test console</h3>
-    <p class="muted">Quick buttons that push events into <code>dataLayer</code> so Tag Assistant can see activity.</p>
+  <div class="wrap">
     <div class="grid">
-      <button class="btn" onclick="signalClick('cta_signup','Sign up','console')">CTA: Sign up</button>
-      <button class="btn" onclick="pushForm('lead_form_v1','Lead form')">Form submit</button>
-      <button class="btn" onclick="pushSearch('pricing',12)">Search: pricing</button>
-      <button class="btn" onclick="pushPage('pricing','Pricing')">Virtual page_view: Pricing</button>
-    </div>
-    <div style="margin-top:12px">
-      <a class="btn" href="https://zbreeden.github.io/FourTwentyAnalytics/" onclick="signalClick('back_to_main_footer','Back to FourTwenty','footer')">← Back to FourTwenty</a>
-    </div>
-  </section>
+      <!-- Story Mode -->
+      <section class="card story" id="story">
+        <h3>Story Mode</h3>
+        <h2 id="story-title">Loading…</h2>
+        <p id="story-text" style="white-space:pre-wrap"></p>
+        <div class="choices" id="choices"></div>
+        <div style="margin-top:8px; color:var(--muted)">
+          <span class="mono">tick: <span id="tick">0</span></span>
+          <span class="mono" style="margin-left:10px">supplies: <span id="supplies">—</span></span>
+          <span class="mono" style="margin-left:10px">morale: <span id="morale">—</span></span>
+        </div>
+      </section>
 
-  <footer>MIT licensed. Built for fast iteration on analytics events.</footer>
-</div>
+      <!-- Sandbox / Controls -->
+      <aside class="card">
+        <h3>Sandbox</h3>
+        <div class="controls">
+          <label>Runs <input type="range" id="runs" min="1" max="2000" value="1000" step="1"> <span class="mono" id="runs-val">1000</span></label>
+          <label>Event risk <input type="range" id="risk" min="0" max="100" value="35"> <span class="mono" id="risk-val">35</span></label>
+          <label>WIP limit <input type="range" id="wip" min="1" max="10" value="5"> <span class="mono" id="wip-val">5</span></label>
+        </div>
+        <footer>
+          <button class="btn" id="export">Export CSV</button>
+          <button class="btn" id="reset">Reset run</button>
+        </footer>
+      </aside>
+    </div>
 
-<script>
-  // Minimal helpers for demo events
-  function signalClick(id,text,loc){
-    window.dataLayer = window.dataLayer || [];
-    dataLayer.push({ event:'cta_click', cta_id:id, cta_text:text, location:loc });
-    console.log('cta_click', {id,text,loc});
+    <!-- Run Log Preview -->
+    <section class="card" style="margin-top:16px">
+      <h3>Recent events</h3>
+      <div class="log">
+        <table>
+          <thead>
+            <tr><th>tick</th><th>event</th><th>node</th><th>choice</th><th>reward</th></tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:8px; color:var(--muted)">
+        Logs persist only for this session. Export to CSV to save under <span class="mono">/artifacts/logs/</span>.
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h3>Artifacts</h3>
+      <p>• Power BI: <a class="link" href="./powerbi/PlayerScorecard.pbix" target="_blank" rel="noopener">PlayerScorecard.pbix</a>
+         &nbsp;• Screens: <a class="link" href="./artifacts/screens/" target="_blank" rel="noopener">/artifacts/screens</a>
+         &nbsp;• Logs: <a class="link" href="./artifacts/logs/" target="_blank" rel="noopener">/artifacts/logs</a></p>
+    </section>
+  </div>
+
+  <script>
+  // ─────────────────────────────────────────────────────────────
+  // Telemetry helper (GTM)
+  window.dataLayer = window.dataLayer || [];
+  function track(event, params={}){ window.dataLayer.push({event, ts:Date.now(), ...params}); }
+
+  // Utils
+  const uid = () => ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
+  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+  // Very small CSV exporter
+  function toCSV(rows){ if(!rows.length) return ""; const cols = Object.keys(rows[0]);
+    const esc = v => '"'+String(v??"").replace(/"/g,'""')+'"';
+    return [cols.join(','), ...rows.map(r=>cols.map(c=>esc(r[c])).join(','))].join('\n'); }
+  function download(name, text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+
+  // State
+  const state = { run_id: uid(), tick: 0, vars: { supplies: 100, morale: 50 }, node: null };
+  const log = [];
+
+  // Seed paths
+  const SEEDS = ['world','actors','rules','storylets','parameters'];
+
+  async function loadSeeds(){
+    const out = {};
+    for(const f of SEEDS){
+      try{
+        const txt = await fetch(`./seeds/${f}.yml`).then(r=> r.ok ? r.text() : Promise.reject());
+        out[f] = jsyaml.load(txt);
+      }catch(e){
+        // Fallback minimal seeds
+        if(f==='world') out.world = { name:'CO₂ Triple System', variables:{ supplies:{start:100}, morale:{start:50} } };
+        if(f==='storylets') out.storylets = [{ id:'canyon_entry', title:'The Canyon Mouth', text:'Chloe hums diagnostics. Wind tastes metallic. Descend or scout?', choices:[{id:'descend_canyon',label:'Descend (−10 supplies)', leads_to:'glyph_cache', effects:['supplies-=10'], reward:2}, {id:'scout_ridge',label:'Scout ridge (+2 morale)', leads_to:'ridge_scan', effects:['morale+=2'], reward:1}] }, { id:'glyph_cache', title:'Glyph Cache', text:'You brush dust from a rib of stone. The rings whisper.', choices:[{id:'end', label:'Log findings (finish)', reward:8}] }, { id:'ridge_scan', title:'Ridge Scan', text:'A broad view reveals safe paths.', choices:[{id:'end', label:'Mark route (finish)', reward:4}] }];
+        if(f==='rules') out.rules = { updates: [] };
+        if(f==='parameters') out.parameters = { runs:1000 };
+      }
+    }
+    return out;
   }
-  function pushForm(id,name){
-    window.dataLayer = window.dataLayer || [];
-    dataLayer.push({ event:'form_submit', form_id:id, form_name:name, fields_count:5 });
-    console.log('form_submit', {id,name});
+
+  // Simple expression evaluator for effects like "supplies -= 10" or "morale += 2"
+  function applyEffects(effects=[]) {
+    const delta = {};
+    for(const fx of effects){
+      const m = String(fx).match(/^(\w+)\s*(\+=|-=|=)\s*(-?\d+(?:\.\d+)?)$/);
+      if(!m) continue;
+      const [, key, op, valStr] = m; const val = parseFloat(valStr);
+      const cur = Number(state.vars[key] ?? 0);
+      if(op==='=') state.vars[key] = val; else if(op==='+=' ) state.vars[key] = cur + val; else if(op==='-=') state.vars[key] = cur - val;
+      delta[key] = state.vars[key];
+    }
+    emit('state_updated', { delta });
   }
-  function pushSearch(q,n){
-    window.dataLayer = window.dataLayer || [];
-    dataLayer.push({ event:'nav_search', query:q, results_count:n });
-    console.log('nav_search', {q,n});
+
+  function emit(event,payload={}){
+    const row = { ts:Date.now(), run_id: state.run_id, tick: state.tick, event, node_id: state.node?.id ?? null, choice_id: payload.choice_id ?? null, reward: payload.reward ?? null };
+    log.push(row); track(event, row);
+    renderLog();
   }
-  function pushPage(id,title){
-    window.dataLayer = window.dataLayer || [];
-    dataLayer.push({ event:'page_view', page_id:id, page_title:title });
-    console.log('page_view', {id,title});
+
+  function goTo(nodeId, seeds){
+    const node = (seeds.storylets || []).find(n=>n.id===nodeId) || null;
+    state.node = node; renderStory(node);
   }
-</script>
+
+  function renderStory(node){
+    const title = document.getElementById('story-title');
+    const text  = document.getElementById('story-text');
+    const box   = document.getElementById('choices');
+    title.textContent = node?.title ?? 'The End';
+    text.textContent  = node?.text ?? 'Run complete.';
+    box.innerHTML = '';
+
+    if(!node){ emit('run_complete', { reward: totalReward() }); return; }
+
+    (node.choices||[]).forEach(ch => {
+      const btn = document.createElement('button'); btn.className='btn'; btn.textContent = ch.label || ch.id; btn.onclick = () => choose(ch);
+      box.appendChild(btn);
+    });
+
+    document.getElementById('tick').textContent = String(state.tick);
+    document.getElementById('supplies').textContent = String(state.vars.supplies);
+    document.getElementById('morale').textContent = String(state.vars.morale);
+  }
+
+  function choose(ch){
+    state.tick += 1;
+    applyEffects(ch.effects);
+    emit('choice_made', { choice_id: ch.id, reward: ch.reward ?? null });
+    if(!ch.leads_to || ch.id==='end') { goTo(null, {}); return; }
+    goTo(ch.leads_to, window.__SEEDS);
+  }
+
+  function totalReward(){ return log.reduce((s,r)=> s + (Number(r.reward)||0), 0); }
+
+  function renderLog(){
+    const body = document.getElementById('log-body'); body.innerHTML = '';
+    const last = log.slice(-20);
+    for(const r of last){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="mono">${r.tick}</td><td class="mono">${r.event}</td><td class="mono">${r.node_id??''}</td><td class="mono">${r.choice_id??''}</td><td class="mono">${r.reward??''}</td>`;
+      body.appendChild(tr);
+    }
+  }
+
+  function wireControls(){
+    const runs = document.getElementById('runs');
+    const risk = document.getElementById('risk');
+    const wip  = document.getElementById('wip');
+    runs.addEventListener('input', e=>{ document.getElementById('runs-val').textContent = e.target.value; track('sim_param_changed', {param:'runs', value:+e.target.value}); });
+    risk.addEventListener('input', e=>{ document.getElementById('risk-val').textContent = e.target.value; track('sim_param_changed', {param:'event_risk', value:+e.target.value}); });
+    wip .addEventListener('input', e=>{ document.getElementById('wip-val').textContent  = e.target.value; track('sim_param_changed', {param:'wip_limit', value:+e.target.value}); });
+
+    document.getElementById('export').onclick = () => {
+      const name = `player-run-${new Date().toISOString().replace(/[:.]/g,'-')}.csv`;
+      download(name, toCSV(log));
+      track('export_csv', { rows: log.length, name });
+    };
+    document.getElementById('reset').onclick = async () => { await start(); track('reset_run'); };
+  }
+
+  async function start(){
+    state.run_id = uid(); state.tick = 0; log.length = 0; document.getElementById('run-id').textContent = state.run_id.slice(0,8);
+    const seeds = await loadSeeds(); window.__SEEDS = seeds;
+    // load initial vars from world
+    try{
+      const v = seeds.world?.variables || {}; state.vars.supplies = Number(v.supplies?.start ?? 100); state.vars.morale = Number(v.morale?.start ?? 50);
+    }catch(_){}
+    emit('run_start', {});
+    goTo((seeds.storylets && seeds.storylets[0]?.id) || 'canyon_entry', seeds);
+  }
+
+  (async function init(){ wireControls(); await start(); })();
+  </script>
 </body>
 </html>
