@@ -19,6 +19,84 @@
   <!-- js-yaml for loading ./seeds/*.yml -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
+  <script>
+// --- RNG helper
+function sampleOutcome(outcomes) {
+  const r = Math.random();
+  let cum = 0;
+  for (const o of outcomes) { cum += Number(eval(String(o.p))); if (r <= cum) return o; }
+  return outcomes[outcomes.length - 1];
+}
+
+// --- Bet policies
+function betSize(policy, bankroll) {
+  const kind = policy?.kind || 'fixed_fraction';
+  if (kind === 'fixed_fraction') {
+    const frac = Math.max(0, Math.min(1, Number(policy.fraction ?? 0.05)));
+    const raw = bankroll * frac;
+    return Math.max(Number(policy.min ?? 1), Math.floor(raw));
+  }
+  if (kind === 'fixed_amount') {
+    return Math.max(1, Number(policy.amount ?? 1));
+  }
+  if (kind === 'kelly') {
+    // Kelly for binary even-money with odds b: fraction f* = (b*p - (1-p))/b
+    const p = Number(policy.p ?? 0.5);
+    const b = Number(policy.b ?? 1); // net odds (even money = 1)
+    const f = Math.max(0, (b*p - (1 - p)) / b);
+    const cap = Number(policy.cap ?? 0.25);
+    return Math.max(1, Math.floor(bankroll * Math.min(f, cap)));
+  }
+  return Math.max(1, Math.floor(bankroll * 0.05));
+}
+
+// --- One Monte Carlo run of a scenario
+async function runScenario(sc, rounds, speedMs = 0) {
+  const id = sc.id;
+  let bankroll = Number(sc.bankroll?.start ?? 100);
+  const goal = Number(sc.bankroll?.goal ?? Infinity);
+  const floor = Number(sc.bankroll?.ruin_at ?? 0);
+  const outcomes = sc.outcomes || [];
+  const policy = sc.bet_policy || { kind: 'fixed_fraction', fraction: 0.05, min: 1 };
+
+  Telemetry.setContext({ mode: 'sim', world_name: id });
+  track('run_start', { scenario_id: id, bankroll });
+
+  for (let r = 1; r <= rounds; r++) {
+    const bet = Math.min(betSize(policy, bankroll), bankroll);
+    if (bet <= 0) { emit('out_of_funds', { bankroll }); break; }
+
+    emit('bet_placed', { round: r, bet, bankroll });
+
+    const o = sampleOutcome(outcomes);
+    const profit = bet * Number(o.multiplier);
+    bankroll += profit;
+
+    emit('round_complete', {
+      round: r, outcome_id: o.id, multiplier: o.multiplier, bet, profit, bankroll
+    });
+
+    if (bankroll <= floor) { emit('ruin', { round: r, bankroll }); break; }
+    if (bankroll >= goal) { emit('goal_hit', { round: r, bankroll }); break; }
+
+    if (speedMs) await sleep(speedMs);
+  }
+
+  emit('run_complete', { scenario_id: id, final_bankroll: bankroll, total_reward: totalReward() });
+  Telemetry.setContext({ mode: 'story' });
+}
+
+// --- UI hook: call this from a new button or reuse Reset/Export area
+async function autoRunSelectedScenario() {
+  const seeds = window.__SEEDS || {};
+  const scenarios = seeds.scenarios || [];
+  const sc = scenarios[0];                  // simplest: pick first scenario for now
+  const rounds = Number(sc?.rounds ?? 100);
+  await start();                            // reset page/log
+  await runScenario(sc, rounds, 0);         // set last arg to e.g. 30ms to animate
+}
+</script>
+
   <style>
     :root{
       --bg:#0b0d10;--panel:#12161b;--muted:#7b8694;--fg:#eef2f6;--accent:#7dd3fc;--line:#1f2730;
@@ -95,6 +173,7 @@
         </div>
         <footer>
           <button class="btn" id="export">Export CSV</button>
+          <button class="btn" onclick="autoRunSelectedScenario()">Auto-Run</button>
           <button class="btn" id="reset">Reset run</button>
         </footer>
       </aside>
@@ -181,7 +260,7 @@
   const log = [];
 
   // Seed paths
-  const SEEDS = ['world','actors','rules','storylets','parameters'];
+  const SEEDS = ['world','actors','rules','storylets','parameters','scenarios'];
 
   async function loadSeeds(){
     const out = {};
