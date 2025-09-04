@@ -1,0 +1,7 @@
+ts,run_id,tick,event,node_id,choice_id,reward
+"1756954559055","f6886c6a-4f4b-4fbe-add1-8aa944d7c046","0","run_start","","",""
+"1756954562215","f6886c6a-4f4b-4fbe-add1-8aa944d7c046","1","state_updated","canyon_entry","",""
+"1756954562216","f6886c6a-4f4b-4fbe-add1-8aa944d7c046","1","choice_made","canyon_entry","descend_canyon","2"
+"1756954570315","f6886c6a-4f4b-4fbe-add1-8aa944d7c046","2","state_updated","glyph_cache","",""
+"1756954570316","f6886c6a-4f4b-4fbe-add1-8aa944d7c046","2","choice_made","glyph_cache","end","8"
+"1756954570317","f6886c6a-4f4b-4fbe-add1-8aa944d7c046","2","run_complete","","","10"
