@@ -1,0 +1,16 @@
+- id: canyon_entry
+  title: "The Canyon Mouth"
+  text: >
+    Chloe hums diagnostics. The wind tastes metallic. Descend or scout?
+  choices:
+    - id: descend_canyon
+      label: "Descend (−10 supplies)"
+      leads_to: "glyph_cache"
+      effects: ["supplies -= 10"]
+      reward: 2
+    - id: scout_ridge
+      label: "Scout ridge (+2 morale)"
+      leads_to: "ridge_scan"
+      effects: ["morale += 2"]
+      reward: 1
+
