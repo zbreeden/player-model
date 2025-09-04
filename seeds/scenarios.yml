@@ -1,19 +1,22 @@
-# Each scenario defines odds (p) and net payout multiplier relative to the stake.
-# multiplier: +1 = win an amount equal to stake; -1 = lose the stake; +35 = roulette straight-up, etc.
+# seeds/scenarios.yml
+# Probability & betting scenarios for The Player (Sim Edition)
+# Profit per round = bet * multiplier
+
 - id: coinflip_even
   label: "Coin Flip (even money)"
   bankroll: { start: 100, goal: 200, ruin_at: 0 }
-  bet_policy: { kind: fixed_fraction, fraction: 0.05, min: 1 }
-  rounds: 100
+  bet_policy: { kind: fixed_fraction, fraction: 0.05, min: 1 }  # 5% Kelly-ish flat fraction
+  rounds: 200
   outcomes:
     - id: win   ; p: 0.5  ; multiplier:  1
     - id: lose  ; p: 0.5  ; multiplier: -1
 
 - id: coinflip_edge
-  label: "Biased Coin (p=0.55)"
+  label: "Biased Coin (p=0.55, Kelly-capped)"
   bankroll: { start: 100, goal: 300, ruin_at: 0 }
-  bet_policy: { kind: kelly, cap: 0.25, p: 0.55, b: 1 }   # Kelly fraction = (b*p - (1-p))/b
-  rounds: 200
+  # Kelly fraction for even-money (b=1) is f* = 2p - 1; capped to 25% bet size
+  bet_policy: { kind: kelly, cap: 0.25, p: 0.55, b: 1 }
+  rounds: 300
   outcomes:
     - id: win   ; p: 0.55 ; multiplier:  1
     - id: lose  ; p: 0.45 ; multiplier: -1
@@ -21,17 +24,29 @@
 - id: roulette_red_eu
   label: "Roulette – Red (European)"
   bankroll: { start: 100, goal: 200, ruin_at: 0 }
-  bet_policy: { kind: fixed_fraction, fraction: 0.10, min: 1 }
-  rounds: 100
+  bet_policy: { kind: fixed_fraction, fraction: 0.10, min: 1 }   # 10% per spin
+  rounds: 200
   outcomes:
-    - id: win   ; p: 18/37 ; multiplier:  1     # negative EV
+    - id: win   ; p: 18/37 ; multiplier:  1    # even-money payout
     - id: lose  ; p: 19/37 ; multiplier: -1
 
 - id: roulette_straight_eu
   label: "Roulette – Single Number (European)"
   bankroll: { start: 100, goal: 800, ruin_at: 0 }
-  bet_policy: { kind: fixed_amount, amount: 2 } # flat bet to show volatility
-  rounds: 200
+  bet_policy: { kind: fixed_amount, amount: 2 }   # flat $2 bet to show volatility
+  rounds: 300
   outcomes:
-    - id: win   ; p: 1/37 ; multiplier: 35
-    - id: lose  ; p: 36/37; multiplier: -1
+    - id: win   ; p: 1/37  ; multiplier: 35     # 35:1 net win
+    - id: lose  ; p: 36/37 ; multiplier: -1
+
+- id: slot_three_symbol
+  label: "Simple Slots (3-symbol)"
+  bankroll: { start: 100, goal: 250, ruin_at: 0 }
+  bet_policy: { kind: fixed_amount, amount: 1 }   # $1 per pull
+  rounds: 500
+  # Toy distribution/payouts (doesn't model reels—just illustrative EV<0)
+  outcomes:
+    - id: jackpot ; p: 0.001 ; multiplier: 100    # 0.1% chance, +$100 on $1 bet
+    - id: big_win ; p: 0.004 ; multiplier: 20
+    - id: small   ; p: 0.10  ; multiplier: 2
+    - id: miss    ; p: 0.895 ; multiplier: -1
