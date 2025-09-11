@@ -1,4 +1,0 @@
-updates:
-  - when: "choice == 'descend_canyon'"
-    effects: ["supplies -= 10", "morale += 5"]
-

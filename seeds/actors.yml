@@ -1,7 +1,0 @@
-- key: chloe
-  label: "Chloe"
-  stats: { trust: 60, curiosity: 80 }
-- key: player
-  label: "You"
-  stats: { risk_appetite: 50, endurance: 50 }
-

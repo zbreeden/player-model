@@ -1,8 +1,0 @@
-name: "CO₂ Triple System"
-time_step: "day"
-variables:
-  supplies: { start: 100, min: 0, max: 999 }
-  morale:   { start: 50,  min: 0, max: 100 }
-  wip:      { start: 3,   min: 0, max: 10 }
-rng: { seed: 42 }
-

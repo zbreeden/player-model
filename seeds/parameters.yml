@@ -1,5 +1,0 @@
-runs: 1000
-distributions:
-  event_risk: "beta(2,5)"
-  find_rate: "poisson(λ=1.2)"
-
