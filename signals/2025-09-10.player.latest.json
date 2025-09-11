@@ -1,0 +1,27 @@
+{
+  "id": "2025-09-10T20:00:00Z-player-broadcast-seed",
+  "ts_utc": "2025-09-10T20:00:00Z",
+  "date": "2025-09-10",
+  "module": "The Player",
+  "repo": "player-model",
+  "title": "Master star broadcast seed initialized",
+  "summary": "Bootstrapped constellation broadcasting: schema, nightly pulse, and Signal renderer.",
+  "tags": ["broadcasting", "schema", "renderer", "pulse"],
+  "rating": "high",
+  "origin": {
+    "name": "The Player",
+    "url": "https://zbreeden.github.io/player-model/",
+    "emoji": "🎲"
+  },
+  "links": {
+    "readme": "https://github.com/zbreeden/player-model#readme",
+    "page": "https://zbreeden.github.io/player-model/",
+    "data": "https://github.com/zbreeden/player-model/tree/main/signals",
+    "runbook": "https://github.com/zbreeden/player-model/blob/main/RUNBOOK.md"
+  },
+  "payload": {
+    "notes": "This is the top-level aggregator in The Player. Nightly pulse pulls latest.json from each star."
+  },
+  "checksum": "",
+  "version": "1.0.0"
+}
