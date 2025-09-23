@@ -1,17 +1,17 @@
 {
-  "id": "2025-09-10T20:00:00Z-player-broadcast-seed",
-  "ts_utc": "2025-09-10T20:00:00Z",
-  "date": "2025-09-10",
-  "module": "The Player",
-  "repo": "player-model",
-  "title": "Master star broadcast seed initialized",
-  "summary": "Bootstrapped constellation broadcasting: schema, nightly pulse, and Signal renderer.",
-  "tags": ["broadcasting", "schema", "renderer", "pulse"],
-  "rating": "high",
+  "id": "20250923T022017Z-player-model-genesis",
+  "ts_utc": "2025-09-23T02:20:17Z",
+  "date": "2025-09-23",
+  "module": "Player Model",
+  "repo": "player-model", 
+  "title": "New constellation star initialized",
+  "summary": "Generated module scaffold with seedset distribution and basic broadcast structure.",
+  "tags": ["genesis", "scaffold", "module", "growth-experiment"],
+  "rating": "normal",
   "origin": {
-    "name": "The Player",
+    "name": "Player Model",
     "url": "https://zbreeden.github.io/player-model/",
-    "emoji": "🎲"
+    "emoji": "🎮"
   },
   "links": {
     "readme": "https://github.com/zbreeden/player-model#readme",
@@ -20,7 +20,10 @@
     "runbook": "https://github.com/zbreeden/player-model/blob/main/RUNBOOK.md"
   },
   "payload": {
-    "notes": "This is the top-level aggregator in The Player. Nightly pulse pulls latest.json from each star."
+    "orbit": "growth-experiment",
+    "status": "seed", 
+    "module_key": "player_model",
+    "notes": "Initial scaffold created by new-module.sh script. Ready for customization and development."
   },
   "checksum": "",
   "version": "1.0.0"
