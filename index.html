@@ -1,423 +1,89 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FourTwenty • The Player (Sim Edition)</title>
-  <meta name="description" content="Probability & decision simulator — scenarios, bankroll paths, and outcomes." />
-  <meta name="color-scheme" content="light dark" />
-
-  <!-- Google Tag Manager (replace with your GTM ID if different) -->
-  <script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-    var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
-    j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-WVC4SNLB');
-  </script>
-  <!-- End GTM -->
-
-  <!-- js-yaml for loading ./seeds/*.yml -->
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-
-  <style>
-    :root{ --bg:#0b0d10; --panel:#12161b; --muted:#7b8694; --fg:#eef2f6; --accent:#7dd3fc; --line:#1f2730 }
-    @media (prefers-color-scheme: light){ :root{ --bg:#f7fafc; --panel:#ffffff; --muted:#5b6572; --fg:#0b1220; --accent:#0369a1; --line:#e6ebf1 } }
-    *{ box-sizing:border-box }
-    body{ margin:0; font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--fg) }
-    header{ display:flex; gap:.75rem; align-items:center; padding:18px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; backdrop-filter:saturate(1.2) blur(6px); background:color-mix(in oklab, var(--bg) 92%, transparent) }
-    header h1{ font-size:18px; margin:0 }
-    .badge{ padding:2px 8px; border:1px solid var(--line); border-radius:999px; color:var(--muted) }
-    .btn{ appearance:none; border:1px solid var(--line); background:#1b2026; color:var(--fg); padding:8px 12px; border-radius:999px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px }
-    .btn:hover{ border-color:var(--accent) }
-
-    .wrap{ max-width:1100px; margin:0 auto; padding:20px }
-    .grid{ display:grid; grid-template-columns: 1.15fr .85fr; gap:16px }
-    .card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px }
-    .card h3{ margin:.25rem 0 .75rem 0; font-size:16px }
-
-    .story{ min-height:270px }
-    .story h2{ margin:.1rem 0 .5rem 0; font-size:18px }
-    .story p{ margin:.25rem 0 .75rem 0 }
-    .choices{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px }
-
-    .controls label{ display:flex; justify-content:space-between; align-items:center; margin:8px 0; color:var(--muted) }
-    input[type="range"]{ width:54% }
-    select{ background:#1b2026; color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:6px 8px }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace }
-
-    .log{ max-height:300px; overflow:auto; border-radius:12px; border:1px solid var(--line) }
-    table{ width:100%; border-collapse:collapse }
-    th,td{ padding:8px 10px; border-bottom:1px solid var(--line); font-size:12px; text-align:left }
-    th{ position:sticky; top:0; background:var(--panel) }
-
-    footer{ display:flex; gap:8px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap }
-    a.link{ color:var(--accent); text-decoration:none }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Player Model - FourTwenty Analytics</title>
+  <meta name="description" content="The Player is the simulator">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎮</text></svg>">
 </head>
 <body>
-  <!-- GTM noscript -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WVC4SNLB" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-
   <header>
-    <a href="https://zbreeden.github.io/FourTwentyAnalytics/?" class="btn" title="Back to FourTwenty">← Back</a>
-    <h1>FourTwenty • The Player</h1>
-    <span class="badge">v0.2.0</span>
-    <span class="badge mono" id="run-id">—</span>
-    <span style="margin-left:auto" class="badge">Sim • Probability</span>
+    <h1>🎮 Player Model</h1>
+    <p>The Player is the simulator</p>
+    <nav>
+      <a href="https://zbreeden.github.io/FourTwentyAnalytics/">← Back to Hub</a> |
+      <a href="https://github.com/zbreeden/player-model">Repository</a> |
+      <a href="https://github.com/zbreeden/FourTwentyAnalytics">Hub Source</a>
+    </nav>
   </header>
-
-  <div class="wrap">
-    <div class="grid">
-      <!-- Story (kept for compatibility) -->
-      <section class="card story" id="story">
-        <h3>Story Mode</h3>
-        <h2 id="story-title">Loading…</h2>
-        <p id="story-text" style="white-space:pre-wrap"></p>
-        <div class="choices" id="choices"></div>
-        <div style="margin-top:8px; color:var(--muted)">
-          <span class="mono">tick: <span id="tick">0</span></span>
-          <span class="mono" style="margin-left:10px">supplies: <span id="supplies">—</span></span>
-          <span class="mono" style="margin-left:10px">morale: <span id="morale">—</span></span>
-          <span class="mono" style="margin-left:10px">bankroll: <span id="bankroll">—</span></span>
-        </div>
-      </section>
-
-      <!-- Sim / Controls -->
-      <aside class="card">
-        <h3>Simulator</h3>
-        <div class="controls">
-          <label>Scenario
-            <select id="scenario"></select>
-          </label>
-          <label>Rounds
-            <input type="range" id="rounds" min="10" max="5000" value="1000" step="10"> <span class="mono" id="rounds-val">1000</span>
-          </label>
-          <label>Speed per round (ms)
-            <input type="range" id="speed" min="0" max="200" value="0" step="10"> <span class="mono" id="speed-val">0</span>
-          </label>
-        </div>
-        <footer>
-          <button class="btn" id="auto">Auto-Run</button>
-          <button class="btn" id="export">Export CSV</button>
-          <button class="btn" id="reset">Reset</button>
-        </footer>
-      </aside>
-    </div>
-
-    <!-- Run Log -->
-    <section class="card" style="margin-top:16px">
-      <h3>Recent events</h3>
-      <div class="log">
-        <table>
-          <thead>
-            <tr id="log-head"></tr>
-          </thead>
-          <tbody id="log-body"></tbody>
-        </table>
-      </div>
-      <div style="margin-top:8px; color:var(--muted)">
-        Logs persist only for this session. Export to CSV to save under <span class="mono">/artifacts/logs/</span>.
+  
+  <main>
+    <section>
+      <h2>🌌 Constellation Info</h2>
+      <ul>
+        <li><strong>Orbit</strong>: growth-experiment</li>
+        <li><strong>Status</strong>: seed</li>  
+        <li><strong>Module Key</strong>: <code>player_model</code></li>
+      </ul>
+    </section>
+    
+    <section>
+      <h2>📡 Latest Signal</h2>
+      <div id="signal-container">
+        <p><em>Loading signal data...</em></p>
       </div>
     </section>
-
-    <section class="card" style="margin-top:16px">
-      <h3>Artifacts</h3>
-      <p>• Power BI: <a class="link" href="./powerbi/PlayerScorecard.pbix" target="_blank" rel="noopener">PlayerScorecard.pbix</a>
-         &nbsp;• Screens: <a class="link" href="./artifacts/screens/" target="_blank" rel="noopener">/artifacts/screens</a>
-         &nbsp;• Logs: <a class="link" href="./artifacts/logs/" target="_blank" rel="noopener">/artifacts/logs</a></p>
-    </section>
-  </div>
+  </main>
+  
+  <footer>
+    <p>Part of the <a href="https://zbreeden.github.io/FourTwentyAnalytics/">FourTwenty Analytics</a> constellation</p>
+  </footer>
 
   <script>
-  // ─────────────────────────────────────────────────────────────
-  // Telemetry (GTM/GA4)
-  window.dataLayer = window.dataLayer || [];
-
-  const Telemetry = (() => {
-    let ctx = {
-      src: 'player',           // easy GTM filter
-      app: 'player-model',
-      version: '0.2.0',        // bump when you ship
-      session_id: crypto.randomUUID(),
-      env: (location.hostname.includes('github.io') ? 'prod' : 'dev'),
-      run_id: null,
-      world_name: null,
-      mode: 'story',           // or 'sim'
-      branch: 'main'
-    };
-
-    function setContext(patch = {}) { ctx = { ...ctx, ...patch }; }
-
-    function flatten(obj, prefix = '', out = {}) {
-      if (!obj || typeof obj !== 'object') return out;
-      for (const [k, v] of Object.entries(obj)) {
-        const key = prefix ? `${prefix}.${k}` : k;
-        if (v && typeof v === 'object' && !Array.isArray(v)) flatten(v, key, out);
-        else out[key] = v;
-      }
-      return out;
-    }
-
-    function track(event, params = {}) {
-      const payload = { ts: Date.now(), ...flatten(params) };
-      const merged = { ...ctx, ...payload };
-      try { window.dataLayer.push({ event, ...merged }); } catch (_) {}
-      return merged;
-    }
-
-    return { track, setContext, getContext: () => ({ ...ctx }) };
-  })();
-
-  // keep old calls working
-  const track = Telemetry.track;
-
-  // ─────────────────────────────────────────────────────────────
-  // Utils
-  const uid = () => ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
-  const sleep = ms => new Promise(r=>setTimeout(r,ms));
-
-  // CSV exporter with union of keys
-  function toCSV(rows){
-    if(!rows.length) return '';
-    const cols = Array.from(rows.reduce((s,r)=>{ Object.keys(r).forEach(k=>s.add(k)); return s; }, new Set()));
-    const esc = v => '"'+String(v??'').replace(/"/g,'""')+'"';
-    return [cols.join(','), ...rows.map(r=>cols.map(c=>esc(r[c])).join(','))].join('\n');
-  }
-  function download(name, text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
-
-  // ─────────────────────────────────────────────────────────────
-  // State & Seeds
-  const state = { run_id: uid(), tick: 0, vars: { supplies: 100, morale: 50 }, node: null };
-  const log = [];
-  const SEEDS = ['world','actors','rules','storylets','parameters','scenarios'];
-
-  async function loadSeeds(){
-    const out = {};
-    for(const f of SEEDS){
-      try{
-        const txt = await fetch(`./seeds/${f}.yml`).then(r=> r.ok ? r.text() : Promise.reject());
-        out[f] = jsyaml.load(txt);
-      }catch(e){
-        // Fallback minimal seeds
-        if(f==='world') out.world = { name:'CO₂ Triple System', variables:{ supplies:{start:100}, morale:{start:50}, wip:{start:3} } };
-        if(f==='storylets') out.storylets = [
-          { id:'canyon_entry', title:'The Canyon Mouth', text:'Chloe hums diagnostics. Wind tastes metallic. Descend or scout?', choices:[{id:'descend_canyon',label:'Descend (−10 supplies)', leads_to:'glyph_cache', effects:['supplies-=10'], reward:2}, {id:'scout_ridge',label:'Scout ridge (+2 morale)', leads_to:'ridge_scan', effects:['morale+=2'], reward:1}] },
-          { id:'glyph_cache', title:'Glyph Cache', text:'You brush dust from a rib of stone. The rings whisper.', choices:[{id:'end', label:'Log findings (finish)', reward:8}] },
-          { id:'ridge_scan', title:'Ridge Scan', text:'A broad view reveals safe paths.', choices:[{id:'end', label:'Mark route (finish)', reward:4}] }
-        ];
-        if(f==='scenarios') out.scenarios = [
-          { id:'coinflip_even', label:'Coin Flip (even money)', bankroll:{start:100, goal:200, ruin_at:0}, bet_policy:{kind:'fixed_fraction', fraction:0.05, min:1}, rounds:200, outcomes:[{id:'win', p:0.5, multiplier:1}, {id:'lose', p:0.5, multiplier:-1}] },
-          { id:'roulette_red_eu', label:'Roulette – Red (EU)', bankroll:{start:100, goal:200, ruin_at:0}, bet_policy:{kind:'fixed_fraction', fraction:0.10, min:1}, rounds:200, outcomes:[{id:'win', p:'18/37', multiplier:1}, {id:'lose', p:'19/37', multiplier:-1}] }
-        ];
-        if(f==='rules') out.rules = { updates: [] };
-        if(f==='parameters') out.parameters = { runs:1000 };
+    // Load and display latest signal data
+    async function loadSignalData() {
+      try {
+        const response = await fetch('./signals/latest.json');
+        if (!response.ok) {
+          throw new Error('Signal data not available');
+        }
+        
+        const signal = await response.json();
+        const container = document.getElementById('signal-container');
+        
+        container.innerHTML = `
+          <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px; background: #f9f9f9;">
+            <h3>${signal.emoji || '📡'} ${signal.title}</h3>
+            <p><strong>Summary:</strong> ${signal.summary}</p>
+            <p><strong>Broadcast Time:</strong> ${new Date(signal.ts_utc).toLocaleString()}</p>
+            <p><strong>Rating:</strong> <span style="
+              background: ${signal.rating === 'critical' ? '#ff4444' : 
+                         signal.rating === 'high' ? '#ff8800' : 
+                         signal.rating === 'normal' ? '#4CAF50' : '#888'}; 
+              color: white; 
+              padding: 2px 8px; 
+              border-radius: 4px; 
+              font-size: 0.8em;">${signal.rating}</span></p>
+            ${signal.tags && signal.tags.length > 0 ? 
+              `<p><strong>Tags:</strong> ${signal.tags.map(tag => 
+                `<span style="background: #e1e8ed; padding: 2px 6px; border-radius: 12px; font-size: 0.8em; margin-right: 4px;">${tag}</span>`
+              ).join('')}</p>` : ''}
+            ${signal.payload && signal.payload.notes ? 
+              `<details>
+                <summary>📋 Additional Notes</summary>
+                <p style="margin-top: 0.5rem; padding: 0.5rem; background: white; border-radius: 4px;">${signal.payload.notes}</p>
+              </details>` : ''}
+          </div>
+        `;
+      } catch (error) {
+        document.getElementById('signal-container').innerHTML = 
+          '<p style="color: #888;"><em>Signal data not yet available. Generate signals/latest.json to see broadcast information.</em></p>';
       }
     }
-    return out;
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Story engine (unchanged basics)
-  function applyEffects(effects=[]) {
-    const delta = {};
-    for(const fx of effects){
-      const m = String(fx).match(/^(\w+)\s*(\+=|-=|=)\s*(-?\d+(?:\.\d+)?)$/);
-      if(!m) continue;
-      const [, key, op, valStr] = m; const val = parseFloat(valStr);
-      const cur = Number(state.vars[key] ?? 0);
-      if(op==='=') state.vars[key] = val; else if(op==='+=' ) state.vars[key] = cur + val; else if(op==='-=') state.vars[key] = cur - val;
-      delta[key] = state.vars[key];
-    }
-    emit('state_updated', { delta });
-  }
-
-  function emit(event,payload={}){
-    const row = { ts:Date.now(), run_id: state.run_id, tick: state.tick, event, node_id: state.node?.id ?? null, choice_id: payload.choice_id ?? null, reward: payload.reward ?? null, ...payload };
-    log.push(row); track(event, row); renderLog();
-  }
-
-  function goTo(nodeId, seeds){
-    const node = (seeds.storylets || []).find(n=>n.id===nodeId) || null;
-    state.node = node; renderStory(node);
-  }
-
-  function renderStory(node){
-    const title = document.getElementById('story-title');
-    const text  = document.getElementById('story-text');
-    const box   = document.getElementById('choices');
-    title.textContent = node?.title ?? 'The End';
-    text.textContent  = node?.text ?? 'Run complete.';
-    box.innerHTML = '';
-
-    if(!node){ emit('run_complete', { total_reward: totalReward() }); return; }
-
-    (node.choices||[]).forEach(ch => {
-      const btn = document.createElement('button'); btn.className='btn'; btn.textContent = ch.label || ch.id; btn.onclick = () => choose(ch);
-      box.appendChild(btn);
-    });
-
-    document.getElementById('tick').textContent = String(state.tick);
-    document.getElementById('supplies').textContent = String(state.vars.supplies);
-    document.getElementById('morale').textContent = String(state.vars.morale);
-    const bk = document.getElementById('bankroll'); if(bk) bk.textContent = state.bankroll != null ? String(state.bankroll) : '—';
-  }
-
-  function choose(ch){
-    state.tick += 1;
-    applyEffects(ch.effects);
-    emit('choice_made', { choice_id: ch.id, reward: ch.reward ?? null });
-    if(!ch.leads_to || ch.id==='end') { goTo(null, {}); return; }
-    goTo(ch.leads_to, window.__SEEDS);
-  }
-
-  function totalReward(){ return log.reduce((s,r)=> s + (Number(r.reward)||0), 0); }
-
-  function renderLog(){
-    const body = document.getElementById('log-body');
-    const head = document.getElementById('log-head');
-    const last = log.slice(-50);
-    // dynamic columns prioritized
-    const priority = ['tick','round','event','scenario_id','node_id','choice_id','bet','profit','bankroll','reward'];
-    const colsSet = new Set(priority);
-    last.forEach(r=> Object.keys(r).forEach(k=> colsSet.add(k)));
-    const cols = Array.from(colsSet);
-    head.innerHTML = cols.map(c=>`<th>${c}</th>`).join('');
-    body.innerHTML = last.map(r=> `<tr>${cols.map(c=>`<td class="mono">${r[c]??''}</td>`).join('')}</tr>`).join('');
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Probability sim helpers
-  function evalProb(p){
-    if (typeof p === 'number') return p;
-    if (typeof p === 'string'){
-      try { return Function(`return (${p})`)(); } catch(_){ return parseFloat(p) || 0; }
-    }
-    return 0;
-  }
-
-  function sampleOutcome(outcomes) {
-    const r = Math.random();
-    let cum = 0;
-    for (const o of outcomes) { cum += Number(evalProb(o.p)); if (r <= cum) return o; }
-    return outcomes[outcomes.length - 1];
-  }
-
-  function betSize(policy, bankroll) {
-    const kind = policy?.kind || 'fixed_fraction';
-    if (kind === 'fixed_fraction') {
-      const frac = Math.max(0, Math.min(1, Number(policy.fraction ?? 0.05)));
-      const raw = bankroll * frac;
-      return Math.max(Number(policy.min ?? 1), Math.floor(raw));
-    }
-    if (kind === 'fixed_amount') {
-      return Math.max(1, Number(policy.amount ?? 1));
-    }
-    if (kind === 'kelly') {
-      const p = Number(policy.p ?? 0.5);
-      const b = Number(policy.b ?? 1);
-      const f = Math.max(0, (b*p - (1 - p)) / b);
-      const cap = Number(policy.cap ?? 0.25);
-      return Math.max(1, Math.floor(bankroll * Math.min(f, cap)));
-    }
-    return Math.max(1, Math.floor(bankroll * 0.05));
-  }
-
-  async function runScenario(sc, rounds, speedMs = 0) {
-    const id = sc.id;
-    state.tick = 0; // use tick as round index
-    state.bankroll = Number(sc.bankroll?.start ?? 100);
-    const goal = Number(sc.bankroll?.goal ?? Infinity);
-    const floor = Number(sc.bankroll?.ruin_at ?? 0);
-    const outcomes = sc.outcomes || [];
-    const policy = sc.bet_policy || { kind: 'fixed_fraction', fraction: 0.05, min: 1 };
-
-    Telemetry.setContext({ mode: 'sim', world_name: id });
-    emit('run_start', { scenario_id: id, bankroll: state.bankroll });
-
-    for (let r = 1; r <= rounds; r++) {
-      state.tick = r;
-      const bet = Math.min(betSize(policy, state.bankroll), state.bankroll);
-      if (bet <= 0) { emit('out_of_funds', { round: r, bankroll: state.bankroll }); break; }
-
-      emit('bet_placed', { round: r, bet, bankroll: state.bankroll, scenario_id: id });
-
-      const o = sampleOutcome(outcomes);
-      const profit = bet * Number(o.multiplier);
-      state.bankroll += profit;
-
-      emit('round_complete', {
-        round: r, outcome_id: o.id, multiplier: o.multiplier, bet, profit, bankroll: state.bankroll, scenario_id: id
-      });
-
-      const bk = document.getElementById('bankroll'); if(bk) bk.textContent = String(state.bankroll);
-
-      if (state.bankroll <= floor) { emit('ruin', { round: r, bankroll: state.bankroll, scenario_id: id }); break; }
-      if (state.bankroll >= goal) { emit('goal_hit', { round: r, bankroll: state.bankroll, scenario_id: id }); break; }
-
-      if (speedMs) await sleep(speedMs);
-    }
-
-    emit('run_complete', { scenario_id: id, final_bankroll: state.bankroll, total_reward: totalReward() });
-    Telemetry.setContext({ mode: 'story' });
-  }
-
-  async function autoRunSelectedScenario() {
-    const seeds = window.__SEEDS || {};
-    const scenarios = seeds.scenarios || [];
-    const sel = document.getElementById('scenario');
-    const id = sel.value || scenarios[0]?.id;
-    const sc = scenarios.find(x=>x.id===id) || scenarios[0];
-    const rounds = Number(document.getElementById('rounds').value || sc?.rounds || 100);
-    const speed = Number(document.getElementById('speed').value || 0);
-    await start();
-    await runScenario(sc, rounds, speed);
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Wiring & bootstrap
-  function wireControls(){
-    const rounds = document.getElementById('rounds');
-    const speed  = document.getElementById('speed');
-    rounds.addEventListener('input', e=>{ document.getElementById('rounds-val').textContent = e.target.value; track('sim_param_changed', {param:'rounds', value:+e.target.value}); });
-    speed .addEventListener('input', e=>{ document.getElementById('speed-val').textContent  = e.target.value; track('sim_param_changed', {param:'speed_ms', value:+e.target.value}); });
-
-    document.getElementById('export').onclick = () => {
-      const name = `player-run-${new Date().toISOString().replace(/[:.]/g,'-')}.csv`;
-      download(name, toCSV(log));
-      track('export_csv', { rows: log.length, name });
-    };
-    document.getElementById('reset').onclick = async () => { await start(); track('reset_run'); };
-    document.getElementById('auto').onclick  = autoRunSelectedScenario;
-  }
-
-  async function populateScenarioSelect(seeds){
-    const sel = document.getElementById('scenario');
-    sel.innerHTML = '';
-    const scenarios = seeds.scenarios || [];
-    scenarios.forEach(sc => {
-      const opt = document.createElement('option'); opt.value = sc.id; opt.textContent = sc.label || sc.id; sel.appendChild(opt);
-    });
-  }
-
-  async function start(){
-    state.run_id = uid(); state.tick = 0; log.length = 0; document.getElementById('run-id').textContent = state.run_id.slice(0,8);
-    const seeds = await loadSeeds(); window.__SEEDS = seeds; await populateScenarioSelect(seeds);
-    // load initial vars from world
-    try{
-      const v = seeds.world?.variables || {}; state.vars.supplies = Number(v.supplies?.start ?? 100); state.vars.morale = Number(v.morale?.start ?? 50);
-    }catch(_){ }
-    Telemetry.setContext({
-      run_id: state.run_id,
-      world_name: (seeds.world && seeds.world.name) || 'Unknown',
-      mode: 'story',
-      branch: 'main',
-      version: '0.2.0'
-    });
-    emit('run_start', {});
-    goTo((seeds.storylets && seeds.storylets[0]?.id) || 'canyon_entry', seeds);
-  }
-
-  (async function init(){ wireControls(); await start(); })();
+    
+    // Load signal data when page loads
+    loadSignalData();
   </script>
 </body>
 </html>
